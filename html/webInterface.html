@@ -1,0 +1,33 @@
+<html>
+<head>
+<script type="text/javascript" src="jquery_js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+
+  $('#button_powerOn').click(function(){
+    $.getJSON("powerOn",function(result){
+      $.each(result, function(i, field){
+        $("div").append(field + " ");
+      });
+    });
+  });
+
+
+  $('#button_powerOff').click(function(){
+    $.getJSON("powerOff",function(result){
+      $.each(result, function(i, field){
+        $("div").append(field + " ");
+      });
+    });
+  });
+  
+});
+</script>
+</head>
+<body>
+<button id="button_powerOn">PowerOn</button><br>
+<button id="button_powerOff">PowerOff</button>
+<div></div>
+
+</body>
+</html>
