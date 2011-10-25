@@ -1,7 +1,8 @@
+import os.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
 from msi import *
 import serial
 import cherrypy
-import os.path
 from cherrypy.lib.static import serve_file
 	
 
@@ -23,12 +24,6 @@ class WebApp:
 		return open(os.path.join(current_dir, 'html', 'webInterface.html'))
 
 	index.exposed = True
-	
-	@cherrypy.expose
-	def jquery_js(self):
-		current_dir = os.path.dirname(os.path.abspath(__file__))
-		return serve_file(os.path.join(current_dir, 'js', 'jquery.js'),
-                              content_type='application/javascript')
 	
 	@cherrypy.expose
 	@cherrypy.tools.json_out()
@@ -59,9 +54,10 @@ class WebApp:
 	def volumeDown(self, **kwargs):
 		marantzSerialInt.cmdMeta('volumeDown')
 		return {"message" : "ACK"}
-		
 
-cherrypy.config.update({'server.socket_host': '0.0.0.0', 
-                         'server.socket_port': 9999, 
-                        })
-cherrypy.quickstart(WebApp())
+
+#cherrypy.config.update('prod.conf')
+#cherrypy.config.update({'server.socket_host': '0.0.0.0', 
+                         #'server.socket_port': 9999, 
+                        #})
+cherrypy.quickstart(WebApp(), '/', 'prod.conf')

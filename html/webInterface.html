@@ -1,33 +1,121 @@
 <html>
 <head>
-<script type="text/javascript" src="jquery_js"></script>
+<title>Marantz Receiver Remote</title>
+<link rel="ICON" href="/html/favicon.ico" type="image/x-icon" />
+<link type="text/css" href="css/ui-darkness/jquery-ui-1.8.16.custom.css" rel="Stylesheet" />	
+<script type="text/javascript" src="js/jquery-1.6.2.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui-1.8.16.custom.min.js"></script>
+
 <script type="text/javascript">
+
+$(function() {
+	$( '#powerRadio' ).buttonset();
+	$( '#button_volumeDown' ).button();
+	$( '#button_volumeUp' ).button();
+	$( '#button_status' ).button();
+	$( "#tabs" ).tabs();
+});
+
+function setRadio(id) {
+    var radio = $('#' + id);
+    radio[0].checked = true;
+    radio.button("refresh");
+}
+
+
+function refreshStatus()
+{
+	$.getJSON("status",function(result)
+	{
+		var $radios = $('input:radio[name=powerButton]');
+		if (result.power == true)
+		{
+			$('#status_power').text('Powered Up');
+			setRadio('radio_powerOn');
+			
+		}
+		else
+		{
+			$('#status_power').text('Powered Down');
+			setRadio('radio_powerOff');
+		}
+		$('#status_volume').text(result.volume);
+	});
+};
+
 $(document).ready(function(){
 
-  $('#button_powerOn').click(function(){
-    $.getJSON("powerOn",function(result){
-      $.each(result, function(i, field){
-        $("div").append(field + " ");
-      });
-    });
-  });
+	$('#radio_powerOn').click(function()
+	{
+		$.getJSON("powerOn", function(result){});
+	});
 
 
-  $('#button_powerOff').click(function(){
-    $.getJSON("powerOff",function(result){
-      $.each(result, function(i, field){
-        $("div").append(field + " ");
-      });
-    });
-  });
+	$('#radio_powerOff').click(function()
+	{
+		$.getJSON("powerOff", function(result){});
+	});
+
+	$('#button_volumeDown').click(function()
+	{
+		$.getJSON("volumeDown", function(result){});
+	});
+	
+	$('#button_volumeUp').click(function()
+	{
+		$.getJSON("volumeUp", function(result){});
+	});
+
+
+	$('#button_status').click(function(){
+		refreshStatus();});
+   
+	$('#tabs').width(450);
+	
+	$('#button_volumeUp').height(70);
+	$('#button_volumeUp').width(180);
+	$('#button_volumeDown').height(70);
+	$('#button_volumeDown').width(180);
+	
+	$("#powerRadio").buttonset().find('label').width(182);
+	
+	window.setInterval(refreshStatus, 100);
   
 });
 </script>
 </head>
 <body>
-<button id="button_powerOn">PowerOn</button><br>
-<button id="button_powerOff">PowerOff</button>
-<div></div>
+
+<div id="tabs">
+	<ul>
+		<li><a href="#tabs-1">Control</a></li>
+		<li><a href="#tabs-2">Settings</a></li>
+		<li><a href="#tabs-3">Status</a></li>
+	</ul>
+
+	<div id="tabs-1">
+		<form>
+			<div id="powerRadio">
+				<input type="radio" id="radio_powerOff" name="powerButton" value="off"/><label for="radio_powerOff">Power Off</label>
+				<input type="radio" id="radio_powerOn" name="powerButton" value="on"/><label for="radio_powerOn">Power On</label>
+			</div>
+		</form>
+		<button id="button_volumeDown">Volume Down</button>
+		<button id="button_volumeUp">Volume Up</button>	
+	</div>
+
+	<div id="tabs-2">
+
+
+	</div>
+	
+	<div id="tabs-3">
+		<button id="button_status">Status</button>
+		<div id="status_raw"></div>
+		<div id="status_volume"></div>
+		<div id="status_power"></div>
+	</div>
+</div>
 
 </body>
 </html>
