@@ -1,5 +1,6 @@
 import os.path
 current_dir = os.path.dirname(os.path.abspath(__file__))
+
 from msi import *
 import serial
 import cherrypy
@@ -73,10 +74,16 @@ class WebApp:
 	def changeSource(self, src):
 		marantzSerialInt.cmd('SRC', src + "" + src)
 		return {"message" : "ACK"}
+		
+	@cherrypy.expose
+	@cherrypy.tools.json_out()		
+	def listSources(self, **kwargs):
+		return marantzSerialInt.sources()
 
 
 #cherrypy.config.update('prod.conf')
 #cherrypy.config.update({'server.socket_host': '0.0.0.0', 
                          #'server.socket_port': 9999, 
                         #})
+
 cherrypy.quickstart(WebApp(), '/', 'prod.conf')

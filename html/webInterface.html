@@ -80,6 +80,17 @@ function addSource(text, value)
 	$( radioGrp ).buttonset();
 }
 
+function loadSources()
+{
+	$.getJSON("listSources",function(result)
+	{
+		$.each(result, function(i, item)
+		{
+			addSource(item[0], item[1]);
+		});
+	});
+};
+
 function refreshStatus()
 {
 	$.getJSON("status",function(result)
@@ -132,23 +143,25 @@ $(document).ready(function(){
 
 	$('#button_status').click(function(){ refreshStatus();  });
 
-	addSource('TV', '1');
-	addSource('DVD', '2');
-	addSource('VCR1', '3');
-	addSource('DSS', '5');
+	loadSources();
+	//addSource('TV', '1');
+	//addSource('DVD', '2');
+	//addSource('VCR1', '3');
+	//addSource('DSS', '5');
 
-	addSource('AUX1', '9');
-	addSource('AUX2', 'A');
-	addSource('CD', 'C');
-	addSource('CD-R', 'D');
+	//addSource('AUX1', '9');
+	//addSource('AUX2', 'A');
+	//addSource('CD', 'C');
+	//addSource('CD-R', 'D');
 
-	addSource('TAPE', 'E');
-	addSource('TUNER', 'F');
-	addSource('FM', 'G');
-	addSource('AM/MW', 'H');
+	//addSource('TAPE', 'E');
+	//addSource('TUNER', 'F');
+	//addSource('FM', 'G');
+	//addSource('AM/MW', 'H');
 	
 	// Formatting
-	$('#tabs').width(450);	
+	$('#tabs').width(420);	
+	$('#tabs').height(480);
 
 	$('#button_volumeUp').height(70);
 	$('#button_volumeUp').width(180);
@@ -169,7 +182,7 @@ $(document).ready(function(){
 });
 </script>
 </head>
-<body>
+<body bgcolor="#000000" >
 
 <div id="tabs">
 	<ul>

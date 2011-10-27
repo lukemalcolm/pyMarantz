@@ -6,6 +6,7 @@ import platform
 import time
 import thread
 import copy
+import ConfigParser
 from threading import *
 from datetime import datetime
 from collections import deque
@@ -36,16 +37,27 @@ class AmpStatus:
 			print '|     No Data      |'
 			print '+------------------+'
 
+knownSources = []
 
 class CmdType:
 
 	cmd = ''
 	value = ''
 
-		
-print "Starting Marantz Serial Interface"
-print 'MSI: Python Version   : ' + platform.python_version()
-print 'MSI: PySerial Version : ' + serial.VERSION
+def readConfig():
+	global knownSources
+	print 'MSI: Attempting to load a config...'
+	parser = ConfigParser.SafeConfigParser()
+	parser.read("./receiverConfigs/marantz7500.cfg")
+	
+	section_names = parser.sections() # returns a list of strings of section names
+	
+	for section in section_names:
+		print section
+		if (section == "sources"):
+			for source_name, source_value in parser.items(section):
+				print source_name.upper() + " : " + source_value.upper()
+				knownSources.append((source_name.upper(), source_value.upper()))
 
 
 class MarantzSerialInterface(Thread):
@@ -227,6 +239,9 @@ class MarantzSerialInterface(Thread):
 		outStatus = copy.deepcopy(self.ampStatus)
 		self.statusLock.release()
 		return outStatus
+		
+	def sources(self):
+		return knownSources
 
 	def run(self):
 		print "Turning AutoStatus On"
@@ -264,7 +279,13 @@ class MarantzSerialInterface(Thread):
 				time.sleep(0.01)
 			except:
 				print "Hit an error."
-	
+
+print "Starting Marantz Serial Interface"
+print 'MSI: Python Version   : ' + platform.python_version()
+print 'MSI: PySerial Version : ' + serial.VERSION
+readConfig()
+
+
 	
 if __name__ == "__main__":
 	
