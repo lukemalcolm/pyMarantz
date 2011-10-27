@@ -13,7 +13,7 @@ from collections import deque
 class AmpStatus:
 	pwr = False
 	vol = -9999
-	src = 0
+	src = 'XX'
 	mute = False
 	att = False
 	bass = -9999
@@ -27,7 +27,7 @@ class AmpStatus:
 			print 'Volume    = ' + str(self.vol)
 			print 'Source    = ' + str(self.src)
 			print 'Mute      = ' + str(self.mute)
-			print 'Attention = ' + str(self.att)
+			print 'Attenuate = ' + str(self.att)
 			print 'Bass      = ' + str(self.bass)
 			print 'Treble    = ' + str(self.treble)
 			print '--------------------'		
@@ -79,8 +79,14 @@ class MarantzSerialInterface(Thread):
 			
 		if self.__getStatus__('AMT') == '2':
 			self.ampStatus.mute = True
+		else:
+			self.ampStatus.mute = False
+			
 		if self.__getStatus__('ATT') == '2':
 			self.ampStatus.att = True
+		else:
+			self.ampStatus.att = False
+			
 		self.ampStatus.bass = int(self.__getStatus__('TOB'))
 		self.ampStatus.treble = int(self.__getStatus__('TOT'))
 
@@ -126,11 +132,11 @@ class MarantzSerialInterface(Thread):
 		ack = self.__readReturn__()
 		if ack == 'ERROR':
 			return 'ERROR'
-		#print 'Serial Response: ' + ack
+		print 'Serial Response: ' + ack
 		ack = ack.rstrip()
 		vals = ack.split(':');
-		#print 'Status ' + statusCmd + ' = ' + vals[1]
-		return vals[1]
+		print 'Status ' + statusCmd + ' = ' + vals[1]
+		return "" + vals[1]
 	
 	
 	def __setAutoStatus__(self, switch):
@@ -153,7 +159,7 @@ class MarantzSerialInterface(Thread):
 			self.ampStatus.vol = int(vals[1])
 			return True	
 		if vals[0] == '@SRC':
-			self.ampStatus.src = int(vals[1])
+			self.ampStatus.src = "" + vals[1]
 			return True	
 		if vals[0] == '@AMT':
 			if vals[1] == '2':
@@ -233,25 +239,31 @@ class MarantzSerialInterface(Thread):
 		
 			# If we haven't got a good set of status data, go grab some.
 			if self.ampStatus.dataOK == False:
-				self.__refreshStatus__()
-				if self.ampStatus.dataOK:
-					self.ampStatus.show()
-					
+				try:
+					self.__refreshStatus__()
+					if self.ampStatus.dataOK:
+						self.ampStatus.show()
+				except:
+					print "Hit an error."
 			# If there is commands in the command queue, execute them
 			if len(self.cmdQueue) > 0:
-				self.cmdQueueLock.acquire()
-				q = self.cmdQueue.popleft();
-				self.__sendCmd__(q.cmd, q.value)
-				self.cmdQueueLock.release()
-				self.__refreshStatus__()
-				
-			
+				try:
+					self.cmdQueueLock.acquire()
+					q = self.cmdQueue.popleft();
+					self.cmdQueueLock.release()
+					self.__sendCmd__(q.cmd, q.value)
+					self.__refreshStatus__()
+				except:
+					print "Hit an error."
+					
 			# Listen for auto events coming back from the Amp.
-			gotEvent = self.__autoListenOnce__()
-			if gotEvent:
-				self.ampStatus.show()
-			time.sleep(0.01)
-		
+			try:
+				gotEvent = self.__autoListenOnce__()
+				if gotEvent:
+					self.ampStatus.show()
+				time.sleep(0.01)
+			except:
+				print "Hit an error."
 	
 	
 if __name__ == "__main__":
@@ -262,7 +274,7 @@ if __name__ == "__main__":
 	msi = MarantzSerialInterface(serialIn)
 	msi.start()
 	
-	msi.cmd('PWR', '0')
+	msi.cmd('PWR', '2')
 	
 	print "Threads started"
 	

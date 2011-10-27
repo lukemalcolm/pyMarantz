@@ -29,7 +29,7 @@ class WebApp:
 	@cherrypy.tools.json_out()
 	def status(self, **kwargs):
 		aStatus = marantzSerialInt.status()
-		return {"power" : aStatus.pwr, "volume": aStatus.vol}
+		return {"power" : aStatus.pwr, "source" : aStatus.src, "volume": aStatus.vol, "mute" : aStatus.mute, "attenuate" : aStatus.att, "treble" : aStatus.treble, "bass" : aStatus.bass}
 		
 	@cherrypy.expose
 	@cherrypy.tools.json_out()		
@@ -53,6 +53,25 @@ class WebApp:
 	@cherrypy.tools.json_out()		
 	def volumeDown(self, **kwargs):
 		marantzSerialInt.cmdMeta('volumeDown')
+		return {"message" : "ACK"}
+
+	@cherrypy.expose
+	@cherrypy.tools.json_out()		
+	def muteOn(self, **kwargs):
+		marantzSerialInt.cmdMeta('muteOn')
+		return {"message" : "ACK"}
+
+	@cherrypy.expose
+	@cherrypy.tools.json_out()		
+	def muteOff(self, **kwargs):
+		marantzSerialInt.cmdMeta('muteOff')
+		return {"message" : "ACK"}
+
+
+	@cherrypy.expose
+	@cherrypy.tools.json_out()		
+	def changeSource(self, src):
+		marantzSerialInt.cmd('SRC', src + "" + src)
 		return {"message" : "ACK"}
 
 

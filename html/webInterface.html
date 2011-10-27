@@ -8,10 +8,19 @@
 
 <script type="text/javascript">
 
+var sourcesCount = 0;
+var sources = Array();
+
 $(function() {
 	$( '#powerRadio' ).buttonset();
+	$( '#radio_source0' ).buttonset();
+	$( '#radio_source1' ).buttonset();
+	$( '#radio_source2' ).buttonset();
 	$( '#button_volumeDown' ).button();
 	$( '#button_volumeUp' ).button();
+	$( '#checkbox_mute' ).button();
+	$( '#checkbox_attenuate' ).button();
+	
 	$( '#button_status' ).button();
 	$( "#tabs" ).tabs();
 });
@@ -22,63 +31,139 @@ function setRadio(id) {
     radio.button("refresh");
 }
 
+function setOnlyValue(group, value) 
+{
+	inputs = $(group).find('input');
+	inputs.each(function()
+	{
+		//alert("Button value = " + $(this)[0].value);
+		if ($(this)[0].value == value)
+			$(this)[0].checked = true;
+		else
+			$(this)[0].checked = false;
+		$(this).button("refresh");
+	});
+}
+
+function reflectSrc(src) 
+{
+	
+	setOnlyValue('#radio_source0', src.charAt(1));
+	setOnlyValue('#radio_source1', src.charAt(1));
+	setOnlyValue('#radio_source2', src.charAt(1));
+}
+
+function addRadio(group, p_text, p_value)
+{
+	v_id = 'radio_src_' + p_text;
+    var newRadio = $('<input>').attr({type: 'radio', id: v_id, name: v_id, value: p_value});
+    var newLabel = $('<label>').attr({for: v_id}).append(p_text);
+    $(group).append(newRadio).append(newLabel);
+    return v_id;
+}
+
+function addSource(text, value)
+{
+	row = Math.floor(sourcesCount / 4);
+	
+	//alert(sourcesCount + '  :  ' + row);
+	radioGrp = '#radio_source' + row;
+	
+	v_id = addRadio(radioGrp, text, value);
+	sourcesCount++;
+	sources[v_id, value];
+
+	$('#' + v_id).live('click', function() {
+		$.getJSON("changeSource/" + value, function(result){});
+	});
+
+	$( radioGrp ).buttonset();
+}
 
 function refreshStatus()
 {
 	$.getJSON("status",function(result)
-	{
+	{	
 		var $radios = $('input:radio[name=powerButton]');
 		if (result.power == true)
 		{
-			$('#status_power').text('Powered Up');
-			setRadio('radio_powerOn');
-			
+			$('#status_power').text("Power : " + 'On');			
+			setRadio('radio_powerOn');	
 		}
 		else
 		{
-			$('#status_power').text('Powered Down');
+			$('#status_power').text("Power: " + 'Off');
 			setRadio('radio_powerOff');
 		}
-		$('#status_volume').text(result.volume);
+		
+		$('#checkbox_mute')[0].checked = result.mute;
+		//#$('#checkbox_attenuate')[0].checked = result.attenuate;
+		
+		$('#checkbox_mute').button("refresh");
+		//$('#checkbox_attenuate').button("refresh");
+		
+		$('#status_source').text("Source : " + result.source);
+		reflectSrc("" + result.source);
+		$('#status_volume').text("Volume : " + result.volume);
+		$('#status_bass').text("Bass : " + result.bass);
+		$('#status_treble').text("Treble : " + result.treble);
+		$('#status_mute').text("Mute : " + result.mute);
+		$('#status_attenuate').text("Attenuate : " + result.attenuate);
+		
 	});
 };
 
 $(document).ready(function(){
 
-	$('#radio_powerOn').click(function()
-	{
-		$.getJSON("powerOn", function(result){});
-	});
-
-
-	$('#radio_powerOff').click(function()
-	{
-		$.getJSON("powerOff", function(result){});
-	});
-
-	$('#button_volumeDown').click(function()
-	{
-		$.getJSON("volumeDown", function(result){});
-	});
+	$('#radio_powerOn').click(function() { $.getJSON("powerOn", function(result){});  });
+	$('#radio_powerOff').click(function() { $.getJSON("powerOff", function(result){});	});
+	$('#button_volumeDown').click(function() { $.getJSON("volumeDown", function(result){});  });	
+	$('#button_volumeUp').click(function() { $.getJSON("volumeUp", function(result){}); });
 	
-	$('#button_volumeUp').click(function()
+	$('#checkbox_mute').click(function()
 	{
-		$.getJSON("volumeUp", function(result){});
+		
+		if ( $('#checkbox_mute')[0].checked == false )
+			$.getJSON("muteOff", function(result){});
+		else
+			$.getJSON("muteOn", function(result){});
 	});
 
 
-	$('#button_status').click(function(){
-		refreshStatus();});
-   
-	$('#tabs').width(450);
+	$('#button_status').click(function(){ refreshStatus();  });
+
+	addSource('TV', '1');
+	addSource('DVD', '2');
+	addSource('VCR1', '3');
+	addSource('DSS', '5');
+
+	addSource('AUX1', '9');
+	addSource('AUX2', 'A');
+	addSource('CD', 'C');
+	addSource('CD-R', 'D');
+
+	addSource('TAPE', 'E');
+	addSource('TUNER', 'F');
+	addSource('FM', 'G');
+	addSource('AM/MW', 'H');
 	
+	// Formatting
+	$('#tabs').width(450);	
+
 	$('#button_volumeUp').height(70);
 	$('#button_volumeUp').width(180);
 	$('#button_volumeDown').height(70);
 	$('#button_volumeDown').width(180);
+
+	$('#checkboxes').find('label').width(364);
 	
 	$("#powerRadio").buttonset().find('label').width(182);
+
+	$("#radio_source0").buttonset().find('label').width(92);
+	$("#radio_source1").buttonset().find('label').width(92);
+	$("#radio_source2").buttonset().find('label').width(92);
 	
+	// Start status update system
 	window.setInterval(refreshStatus, 100);
   
 });
@@ -102,6 +187,40 @@ $(document).ready(function(){
 		</form>
 		<button id="button_volumeDown">Volume Down</button>
 		<button id="button_volumeUp">Volume Up</button>	
+	
+		<div id="checkboxes">
+			<br>
+			<input  type="checkbox" id="checkbox_mute"><label for="checkbox_mute">Mute</label>
+			<!-- <br><br>
+			<input  type="checkbox" id="checkbox_attenuate"><label for="checkbox_attenuate">ATT</label> -->
+		</div>
+
+		</br>
+		
+		<form>
+			<div id="radio_source0">
+<!--				<input type="radio" id="radio_tv" name="powerButton" value="on"/><label for="radio_tv">TV</label>
+				<input type="radio" id="radio_dvd" name="powerButton" value="off"/><label for="radio_dvd">DVD</label>
+				<input type="radio" id="radio_vcr1" name="powerButton" value="off"/><label for="radio_vcr1">VCR1</label>
+				<input type="radio" id="radio_vcr2" name="powerButton" value="off"/><label for="radio_vcr2">VCR2</label>-->
+			</div>				
+			
+			</br>
+			
+			<div id="radio_source1">
+<!--				<input type="radio" id="radio_dss" name="powerButton" value="off"/><label for="radio_dss">DSS</label>
+				<input type="radio" id="radio_t1" name="powerButton" value="off"/><label for="radio_t1">T1</label>
+				<input type="radio" id="radio_t2" name="powerButton" value="off"/><label for="radio_t2">T2</label>
+				<input type="radio" id="radio_cd" name="powerButton" value="off"/><label for="radio_cd">CD</label>-->
+			</div>
+
+			</br>
+			
+			<div id="radio_source2">
+			</div>
+		</form>
+
+	
 	</div>
 
 	<div id="tabs-2">
@@ -111,9 +230,15 @@ $(document).ready(function(){
 	
 	<div id="tabs-3">
 		<button id="button_status">Status</button>
+		<br><br>
 		<div id="status_raw"></div>
-		<div id="status_volume"></div>
 		<div id="status_power"></div>
+		<div id="status_volume"></div>
+		<div id="status_source"></div>
+		<div id="status_mute"></div>
+		<div id="status_attenuate"></div>		
+		<div id="status_bass"></div>
+		<div id="status_treble"></div>		
 	</div>
 </div>
 
