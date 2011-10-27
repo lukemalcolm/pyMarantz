@@ -12,6 +12,7 @@ var sourcesCount = 0;
 var sources = Array();
 
 $(function() {
+	$( "#tabs" ).tabs();
 	$( '#powerRadio' ).buttonset();
 	$( '#radio_source0' ).buttonset();
 	$( '#radio_source1' ).buttonset();
@@ -20,9 +21,8 @@ $(function() {
 	$( '#button_volumeUp' ).button();
 	$( '#checkbox_mute' ).button();
 	$( '#checkbox_attenuate' ).button();
-	
 	$( '#button_status' ).button();
-	$( "#tabs" ).tabs();
+
 });
 
 function setRadio(id) {
@@ -47,7 +47,7 @@ function setOnlyValue(group, value)
 
 function reflectSrc(src) 
 {
-	
+	// Take the second value from the source data (which represents the audio source)
 	setOnlyValue('#radio_source0', src.charAt(1));
 	setOnlyValue('#radio_source1', src.charAt(1));
 	setOnlyValue('#radio_source2', src.charAt(1));
@@ -65,7 +65,7 @@ function addRadio(group, p_text, p_value)
 function addSource(text, value)
 {
 	row = Math.floor(sourcesCount / 4);
-	
+
 	//alert(sourcesCount + '  :  ' + row);
 	radioGrp = '#radio_source' + row;
 	
@@ -126,11 +126,11 @@ function refreshStatus()
 
 $(document).ready(function(){
 
+	// Create all button behaviours
 	$('#radio_powerOn').click(function() { $.getJSON("powerOn", function(result){});  });
 	$('#radio_powerOff').click(function() { $.getJSON("powerOff", function(result){});	});
 	$('#button_volumeDown').click(function() { $.getJSON("volumeDown", function(result){});  });	
 	$('#button_volumeUp').click(function() { $.getJSON("volumeUp", function(result){}); });
-	
 	$('#checkbox_mute').click(function()
 	{
 		
@@ -139,25 +139,10 @@ $(document).ready(function(){
 		else
 			$.getJSON("muteOn", function(result){});
 	});
-
-
 	$('#button_status').click(function(){ refreshStatus();  });
 
+	// Dynamically build the source buttons
 	loadSources();
-	//addSource('TV', '1');
-	//addSource('DVD', '2');
-	//addSource('VCR1', '3');
-	//addSource('DSS', '5');
-
-	//addSource('AUX1', '9');
-	//addSource('AUX2', 'A');
-	//addSource('CD', 'C');
-	//addSource('CD-R', 'D');
-
-	//addSource('TAPE', 'E');
-	//addSource('TUNER', 'F');
-	//addSource('FM', 'G');
-	//addSource('AM/MW', 'H');
 	
 	// Formatting
 	$('#tabs').width(420);	
@@ -181,6 +166,7 @@ $(document).ready(function(){
   
 });
 </script>
+
 </head>
 <body bgcolor="#000000" >
 

@@ -37,70 +37,91 @@ class AmpStatus:
 			print '|     No Data      |'
 			print '+------------------+'
 
-knownSources = []
 
+class AmpConfig:
+	knownSources = []
+	CMD_PWR = ''
+	CMD_VOL = ''
+	CMD_SRC = ''
+	CMD_BASS = ''
+	CMD_TREBLE = ''
+	CMD_MUTE = ''
+	CMD_ATT = ''
+	CMD_AUTOSTATUS = ''
+	LVL_AUTOSTATUS = ''
+	
 class CmdType:
 
 	cmd = ''
 	value = ''
 
-def readConfig():
-	global knownSources
-	print 'MSI: Attempting to load a config...'
-	parser = ConfigParser.SafeConfigParser()
-	parser.read("./receiverConfigs/marantz7500.cfg")
-	
-	section_names = parser.sections() # returns a list of strings of section names
-	
-	for section in section_names:
-		print section
-		if (section == "sources"):
-			for source_name, source_value in parser.items(section):
-				print source_name.upper() + " : " + source_value.upper()
-				knownSources.append((source_name.upper(), source_value.upper()))
-
 
 class MarantzSerialInterface(Thread):
-
 	def __init__(self, ser):
 		Thread.__init__(self)
+
 		self.serialPort = ser
-		
+
+		self.ampConfig = AmpConfig()		
 		self.ampStatus = AmpStatus()
 		self.statusLock = Condition()
 		
 		self.cmdQueue = deque([])
 		self.cmdQueueLock = Condition()
+		self.readConfig()
 
+	def readConfig(self):
+		print 'MSI: Attempting to load a config...'
+		parser = ConfigParser.SafeConfigParser()
+		parser.read("./receiverConfigs/marantz7500.cfg")
+		
+		section_names = parser.sections() # returns a list of strings of section names
+		
+		for section in section_names:
+			if (section == "sources"):
+				for source_name, source_value in parser.items(section):
+					print source_name.upper() + " : " + source_value.upper()
+					self.ampConfig.knownSources.append((source_name.upper(), source_value.upper()))
+			if (section == "commands"):
+					self.ampConfig.CMD_PWR = parser.get('commands', 'Power')
+					self.ampConfig.CMD_VOL = parser.get('commands', 'Volume')
+					self.ampConfig.CMD_SRC = parser.get('commands', 'Source')
+					self.ampConfig.CMD_BASS = parser.get('commands', 'Bass')
+					self.ampConfig.CMD_TREBLE = parser.get('commands', 'Treble')
+					self.ampConfig.CMD_MUTE = parser.get('commands', 'Mute')
+					self.ampConfig.CMD_ATT = parser.get('commands', 'Att')
+					self.ampConfig.CMD_AUTOSTATUS = parser.get('commands', 'AutoStatus')
+					self.ampConfig.LVL_AUTOSTATUS = parser.get('commands', 'ASLevel')					
+					
 	def __refreshStatus__(self):
-		if self.__getStatus__('PWR') == '2':
+		if self.__getStatus__(self.ampConfig.CMD_PWR) == '2':
 			self.ampStatus.pwr = True
 			self.ampStatus.dataOK = True
 		else:
 			self.ampStatus.dataOK = False
 			return
 		
-		self.ampStatus.vol = int(self.__getStatus__('VOL'))
+		self.ampStatus.vol = int(self.__getStatus__(self.ampConfig.CMD_VOL))
 		
-		src = self.__getStatus__('SRC')
+		src = self.__getStatus__(self.ampConfig.CMD_SRC)
 		self.ampStatus.src = src
 		# If the Source is only one character long, we know we're in a bad data state. (i.e. the Receiver is booting up)
 		if len(src) <> 2:
 			self.ampStatus.dataOK = False
 			return	
 			
-		if self.__getStatus__('AMT') == '2':
+		if self.__getStatus__(self.ampConfig.CMD_MUTE) == '2':
 			self.ampStatus.mute = True
 		else:
 			self.ampStatus.mute = False
 			
-		if self.__getStatus__('ATT') == '2':
+		if self.__getStatus__(self.ampConfig.CMD_ATT) == '2':
 			self.ampStatus.att = True
 		else:
 			self.ampStatus.att = False
 			
-		self.ampStatus.bass = int(self.__getStatus__('TOB'))
-		self.ampStatus.treble = int(self.__getStatus__('TOT'))
+		self.ampStatus.bass = int(self.__getStatus__(self.ampConfig.CMD_BASS))
+		self.ampStatus.treble = int(self.__getStatus__(self.ampConfig.CMD_TREBLE))
 
 	
 	def __readReturn__(self, timeout = 1.0):
@@ -153,42 +174,42 @@ class MarantzSerialInterface(Thread):
 	
 	def __setAutoStatus__(self, switch):
 		if switch == True:
-			self.__sendCmd__('AST','9')
+			self.__sendCmd__(self.ampConfig.CMD_AUTOSTATUS, self.ampConfig.LVL_AUTOSTATUS)
 		else:
-			self.__sendCmd__('AST','0')
+			self.__sendCmd__(self.ampConfig.CMD_AUTOSTATUS,'0')
 
 	
 	def __processStatus__(self, statusStr):
 		statusStr = statusStr.rstrip()
 		vals = statusStr.split(':');
-		if vals[0] == '@PWR':
+		if vals[0] == '@' + self.ampConfig.CMD_PWR:
 			if vals[1] == '2':
 				self.ampStatus.pwr = True
 			else:
 				self.ampStatus.pwr = False
 			return True
-		if vals[0] == '@VOL':
+		if vals[0] == '@' + self.ampConfig.CMD_VOL:
 			self.ampStatus.vol = int(vals[1])
 			return True	
-		if vals[0] == '@SRC':
+		if vals[0] == '@' + self.ampConfig.CMD_SRC:
 			self.ampStatus.src = "" + vals[1]
 			return True	
-		if vals[0] == '@AMT':
+		if vals[0] == '@' + self.ampConfig.CMD_MUTE:
 			if vals[1] == '2':
 				self.ampStatus.mute = True
 			else:
 				self.ampStatus.mute = False
 			return True	
-		if vals[0] == '@ATT':
+		if vals[0] == '@' + self.ampConfig.CMD_ATT:
 			if vals[1] == '2':
 				self.ampStatus.att = True
 			else:
 				ampStatus.att = False
 			return True	
-		if vals[0] == '@TOB':
+		if vals[0] == '@' + self.ampConfig.CMD_BASS:
 			self.ampStatus.bass = int(vals[1])
 			return True	
-		if vals[0] == '@TOT':
+		if vals[0] == '@' + self.ampConfig.CMD_TREBLE:
 			self.ampStatus.treble = int(vals[1])
 			return True
 		return False
@@ -214,25 +235,25 @@ class MarantzSerialInterface(Thread):
 		
 	def cmdMeta(self, cmdString):
 		if cmdString == 'powerOn':
-			self.cmd('PWR', '2')	
+			self.cmd(self.ampConfig.CMD_PWR, '2')	
 		if cmdString == 'powerOff':
-			self.cmd('PWR', '1')
+			self.cmd(self.ampConfig.CMD_PWR, '1')
 		if cmdString == 'muteOn':
-			self.cmd('AMT', '2')	
+			self.cmd(self.ampConfig.CMD_MUTE, '2')	
 		if cmdString == 'muteOff':
-			self.cmd('AMT', '1')	
+			self.cmd(self.ampConfig.CMD_MUTE, '1')	
 		if cmdString == 'volumeUp':
-			self.cmd('VOL', '1')
+			self.cmd(self.ampConfig.CMD_VOL, '1')
 		if cmdString == 'volumeDown':
-			self.cmd('VOL', '2')
+			self.cmd(self.ampConfig.CMD_VOL, '2')
 		if cmdString == 'bassUp':
-			self.cmd('TOB', '1')
+			self.cmd(self.ampConfig.CMD_BASS, '1')
 		if cmdString == 'bassDown':
-			self.cmd('TOB', '2')
+			self.cmd(self.ampConfig.CMD_BASS, '2')
 		if cmdString == 'trebleUp':
-			self.cmd('TOT', '1')
+			self.cmd(self.ampConfig.CMD_TREBLE, '1')
 		if cmdString == 'trebleDown':
-			self.cmd('TOT', '2')
+			self.cmd(self.ampConfig.CMD_TREBLE, '2')
 		
 	def status(self):
 		self.statusLock.acquire()
@@ -241,7 +262,7 @@ class MarantzSerialInterface(Thread):
 		return outStatus
 		
 	def sources(self):
-		return knownSources
+		return self.ampConfig.knownSources
 
 	def run(self):
 		print "Turning AutoStatus On"
@@ -261,7 +282,7 @@ class MarantzSerialInterface(Thread):
 				except:
 					print "Hit an error."
 			# If there is commands in the command queue, execute them
-			if len(self.cmdQueue) > 0:
+			while len(self.cmdQueue) > 0:
 				try:
 					self.cmdQueueLock.acquire()
 					q = self.cmdQueue.popleft();
@@ -283,8 +304,6 @@ class MarantzSerialInterface(Thread):
 print "Starting Marantz Serial Interface"
 print 'MSI: Python Version   : ' + platform.python_version()
 print 'MSI: PySerial Version : ' + serial.VERSION
-readConfig()
-
 
 	
 if __name__ == "__main__":
