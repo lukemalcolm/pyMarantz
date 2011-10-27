@@ -86,4 +86,4 @@ class WebApp:
                          #'server.socket_port': 9999, 
                         #})
 
-cherrypy.quickstart(WebApp(), '/', 'prod.conf')
+cherrypy.quickstart(WebApp(), '/', 'webservice.cfg')
