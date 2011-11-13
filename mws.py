@@ -22,7 +22,7 @@ marantzSerialInt.start()
 class WebApp:
 	def index(self):
 		current_dir = os.path.dirname(os.path.abspath(__file__))
-		return open(os.path.join(current_dir, 'html', 'webInterface.html'))
+		return open(os.path.join(current_dir, 'html', 'mobileInterface.html'))
 
 	index.exposed = True
 	
